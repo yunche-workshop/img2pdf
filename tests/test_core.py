@@ -1283,13 +1283,30 @@ class TestDocReferences(unittest.TestCase):
     def test_every_script_the_docs_mention_exists(self):
         seen = 0
         for name, text in self._docs():
-            for ref in set(re.findall(r"(?:src|tests|assets)/[\w.一-鿿-]+\.(?:py|ico|md|json)",
-                                      text)):
+            # 后缀表要跟着文档里真出现过的东西长。早先这里没有 png，
+            # 而 README 里嵌了 assets/screenshots/*.png —— 那几张图引用
+            # 一条都没被检查过，测试"全绿"给的是假安全感。
+            for ref in set(re.findall(
+                    r"(?:src|tests|assets)/[\w./一-鿿-]+\.(?:py|ico|md|json|png)", text)):
                 seen += 1
                 self.assertTrue(
                     os.path.exists(os.path.join(self.ROOT, ref.replace("\\", "/"))),
                     "%s 里引用了不存在的文件：%s" % (name, ref))
         self.assertGreater(seen, 5, "一条都没扫到 = 正则在空跑")
+
+    def test_every_screenshot_the_readme_embeds_exists(self):
+        """![..](..) 和 <img src=..> 两种写法都得查，且图不能是 0 字节的空文件。"""
+        with open(os.path.join(self.ROOT, "README.md"), encoding="utf-8") as fh:
+            text = fh.read()
+        refs = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", text)
+        refs += re.findall(r'<img[^>]+src="([^"]+)"', text)
+        refs = [r for r in refs if not r.startswith(("http://", "https://"))]
+        self.assertGreaterEqual(len(refs), 3,
+                                "README 里一张界面图都没嵌 = 首页在空跑")
+        for r in refs:
+            p = os.path.join(self.ROOT, r)
+            self.assertTrue(os.path.exists(p), "README 引用了不存在的图：%s" % r)
+            self.assertGreater(os.path.getsize(p), 1024, "图是空的或截坏了：%s" % r)
 
     def test_readme_version_matches_the_kernel(self):
         for name, text in self._docs():
