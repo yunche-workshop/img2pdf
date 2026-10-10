@@ -24,6 +24,20 @@ PNG 走的是另一条路：自己解扫描线（含 5 种行滤波）→ 拆出
 python -c "print(open('x.jpg','rb').read()[:4])"   # 这就是为什么 JPEG 能原样封装
 ```
 
+## 截图
+
+![载入图片](assets/screenshots/02_载入图片.png)
+
+列表里那行「规格」是真从文件头里读出来的：JPEG 取 SOF 段的尺寸和 JFIF/EXIF 密度，
+PNG 取 IHDR 和 pHYs，不靠猜。
+
+![参数与预览](assets/screenshots/04_参数与预览.png)
+
+![转换完成](assets/screenshots/05_转换完成.png)
+
+底部那行「好了：6 页 · 4.6 MB → …」是转换结果的摘要，
+**页数和体积是转换完从产物里读回来的**，不是按参数估的。
+
 ## 支持什么
 
 | 输入 | 说明 |
@@ -142,7 +156,7 @@ python build.py
 ## 测试
 
 ```bash
-python -m unittest discover -s tests -p "test_*.py"   # 131 项：PNG 每种位深/滤波、
+python -m unittest discover -s tests -p "test_*.py"   # 132 项：PNG 每种位深/滤波、
                                                        # JPEG 头、EXIF、排版数学、
                                                        # PDF 结构、CLI 参数
 python tests/smoke_ui.py                              # 66 项界面冒烟（要 tkinter）
